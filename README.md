@@ -1,0 +1,1 @@
+Estoy leyendo "Writing an interpreter in Go", con el fin de aprender Go, y también aprender de parsing y a la vez de lenguajes. Es casi lo mismo que el libro, sólo que tiene algunos pequeños cambios personales que le agregué.
