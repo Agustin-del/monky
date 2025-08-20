@@ -55,7 +55,6 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	statement := &ast.LetStatement{Token: p.curToken}
 
 	if !p.expectPeek(token.IDENT) {
-		p.errors = append(p.errors, "Se esperaba un identificador.")
 		p.skipTilSemicolon()
 		return nil
 	}
@@ -63,7 +62,6 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	statement.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 
 	if !p.expectPeek(token.ASSIGN) {
-		p.errors = append(p.errors, "Se esperaba '='")
 		p.skipTilSemicolon()
 		return nil
 	}
@@ -73,7 +71,6 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	statement.Value = p.parseExpression()
 
 	if !p.expectPeek(token.SEMICOLON) {
-		p.errors = append(p.errors, "Se esperaba ';'")
 		p.skipTilSemicolon()
 		return nil
 	}
@@ -84,7 +81,6 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	statement := &ast.ReturnStatement{Token: p.curToken}
 
 	if p.curToken.Type != token.RETURN {
-		p.errors = append(p.errors, "Se esperaba 'return'")
 		p.skipTilSemicolon()
 		return nil
 	}
@@ -92,9 +88,8 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	p.nextToken()
 	statement.Value = p.parseExpression()
 
-	p.nextToken()
-	if p.curToken.Type != token.SEMICOLON {
-		p.errors = append(p.errors, "Se esperaba ';'")
+	if !p.expectPeek(token.SEMICOLON) {
+		p.skipTilSemicolon()
 		return nil
 	}
 
@@ -102,15 +97,60 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 }
 
 func (p *Parser) parseIfStatement() *ast.IfStatement {
-	return nil
+	statement := &ast.IfStatement{Token: p.curToken}
+
+	if !p.expectPeek(token.LPAREN) {
+		p.skipTilSemicolon()
+		return nil
+	}
+	
+	p.nextToken()	
+	statement.Condition = p.parseExpression()	
+
+	if !p.expectPeek(token.RPAREN) {
+		p.skipTilSemicolon()
+		return nil
+	}
+
+	if !p.expectPeek(token.LBRACE) {
+		p.skipTilSemicolon()
+		return nil
+	}
+	
+	statement.Consequence = p.parseBlockStatement()	
+
+	if p.expectPeek(token.ELSE) {
+		statement.Alternative = p.parseBlockStatement()
+	}
+
+	return statement
+}
+
+func (p * Parser) parseBlockStatement() *ast.BlockStatement {
+	block := &ast.BlockStatement{Token: p.curToken, Statements: []ast.Statement{}}
+
+	p.nextToken()
+	
+	for ; p.curToken.Type != token.RBRACE && p.curToken.Type != token.EOF; p.nextToken() {
+		stmt := p.parseStatement()
+		if stmt != nil {
+			block.Statements = append(block.Statements, stmt)
+		}
+	}
+	return block
 }
 
 func (p *Parser) parseExpression() ast.Expression {
+  for p.peekToken.Type != token.SEMICOLON &&
+        p.peekToken.Type != token.RPAREN &&
+        p.peekToken.Type != token.EOF {
+        p.nextToken()
+    }
 	return nil
 }
 
 func (p *Parser) expectPeek(t token.TokenType) bool {
-	if t == p.peekToken.Type  {
+	if t == p.peekToken.Type {
 		p.nextToken()
 		return true
 	} else {
@@ -119,8 +159,8 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 	}
 }
 
-func (p *Parser) peekError(t token.TokenType){
-	msg := fmt.Sprintf("Expected next token to be %s, got %s", t, p.peekToken.Type)
+func (p *Parser) peekError(t token.TokenType) {
+	msg := fmt.Sprintf("Expected next token to be %s, got %s",t, p.peekToken.Type)
 	p.errors = append(p.errors, msg)
 }
 

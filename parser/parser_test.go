@@ -84,11 +84,43 @@ func TestReturnStatement(t *testing.T) {
 	for _, stmt := range program.Statements {
 		returnStmt, ok := stmt.(*ast.ReturnStatement)
 		if !ok {
-			t.Errorf("stmt not *ast.Statement. Got=%T", stmt)
+			t.Errorf("stmt not *ast.ReturnStatement. Got=%T", stmt)
 			continue
 		}
 		if returnStmt.TokenLiteral() != "return" {
 			t.Errorf("s.TokenLiteral not 'return'. got=%q", returnStmt.TokenLiteral())
+		}
+	}
+}
+
+func TestIfStatement(t *testing.T) {
+	input := `
+		if(x > 5) {
+			return 4;
+		} else {
+			x = 10;
+			return x;
+		}
+	`
+
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program. does not contain 1 statements. Got=%d", len(program.Statements))
+	}
+
+	for _, stmt := range program.Statements {
+		ifStmt, ok := stmt.(*ast.IfStatement)
+		if !ok {
+			t.Errorf("stmt not *ast.IfStatement. Got=%T", ifStmt)
+			continue
+		}
+		if ifStmt.TokenLiteral() != "if" {
+			t.Errorf("s.TokenLiteral not 'if'. got=%q", ifStmt.TokenLiteral())
 		}
 	}
 }

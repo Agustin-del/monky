@@ -37,7 +37,9 @@ type ReturnStatement struct {
 
 type IfStatement struct {
 	Token       token.Token
-	Conditional Expression
+	Condition   Expression
+	Consequence *BlockStatement
+	Alternative *BlockStatement
 }
 
 type ExpressionStatement struct {
@@ -48,6 +50,11 @@ type ExpressionStatement struct {
 type Identifier struct {
 	Token token.Token
 	Value string
+}
+
+type BlockStatement struct {
+	Token      token.Token
+	Statements []Statement
 }
 
 func (p *Program) TokenLiteral() string {
@@ -75,7 +82,7 @@ func (ls *LetStatement) String() string {
 	out.WriteString(ls.TokenLiteral() + " ")
 
 	out.WriteString(ls.Name.String())
-	
+
 	out.WriteString(" = ")
 	if ls.Value != nil {
 		out.WriteString(ls.Value.String())
@@ -112,8 +119,26 @@ func (rs *ReturnStatement) TokenLiteral() string {
 
 func (is *IfStatement) statementNode() {}
 
-func (is *IfStatement) String () string{
-	return ""
+func (is *IfStatement) String() string {
+	var out strings.Builder
+	out.WriteString(is.TokenLiteral() + " ")
+	if is.Condition != nil {
+		out.WriteString(is.Condition.String())
+	}
+
+	if is.Consequence != nil {
+		out.WriteString(" {")
+		out.WriteString(is.Consequence.String())
+		out.WriteString("}")
+	}
+
+	if is.Alternative != nil {
+		out.WriteString(" else {")
+		out.WriteString(is.Alternative.String())
+		out.WriteString("}")
+	}
+
+	return out.String()
 }
 
 func (is *IfStatement) TokenLiteral() string {
@@ -124,7 +149,6 @@ func (es *ExpressionStatement) statementNode() {}
 
 func (es *ExpressionStatement) String() string {
 	if es.Expression != nil {
-
 		return es.Expression.String()
 	}
 	return ""
@@ -142,4 +166,19 @@ func (i *Identifier) String() string {
 
 func (i *Identifier) TokenLiteral() string {
 	return i.Token.Literal
+}
+
+func (bs *BlockStatement) statementNode() {}
+
+func (bs *BlockStatement) String() string {
+	var out strings.Builder
+	for _, stmt := range bs.Statements {
+		out.WriteString(stmt.String())
+	}
+
+	return out.String()
+}
+
+func (bs *BlockStatement) TokenLiteral() string {
+	return bs.Token.Literal
 }
